@@ -388,6 +388,16 @@ struct ArgumentUnpacker<T, Rest...>
 };
 
 
+template<typename T>
+void pushCallResult(HSQUIRRELVM vm, T& result, std::true_type) {
+  types::pushValue(vm, &result);
+}
+
+template<typename T>
+void pushCallResult(HSQUIRRELVM vm, const T& result, std::false_type) {
+  types::pushValue(vm, result);
+}
+
 // return Ret
 template <typename Ret, typename... Args>
 typename std::enable_if<!std::is_void<Ret>::value, SQInteger>::type
@@ -399,12 +409,14 @@ callFunction(HSQUIRRELVM vm, const std::function<Ret(Args...)>& func, ExtractFun
         return func(args...);
       }, argsCount, ext);
 
-  // hm... convert Type& -> Type otherwise, use a pointer or stared_ptr
-  typedef typename std::remove_reference<Ret>::type ValueType;
+  // Type& -> Type*
+  // Type* -> Type*
+  // Type  -> Type
 
-  types::pushValue(vm, result);
+  pushCallResult(vm, result, typename std::is_lvalue_reference<Ret>::type());
   return 1;
 }
+
 
 // return void
 template <typename Ret, typename... Args>
