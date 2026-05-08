@@ -145,7 +145,7 @@ int main() {
 
 Important!
 
-All variables, declared types, classes will exist until we destroy `sqb`
+All variables, declared types, classes will exist until destroy `sqb`
 
 This is convenient because you can call basic functions and classes from a file, then call another file that will use the already loaded data, or call small routines from a string.
 
@@ -181,7 +181,7 @@ sqb.bindFunction("func", [](std::string name){
 
 Now you can call **func() from Squirrel.**
 
-Often, when binding, the C++ API comes across, which contains many overloaded functions. This is exactly the trouble I'm facing. But unfortunately, SQBinding solves this simply.
+Often, when binding, the C++ API comes across, which contains many overloaded functions. This is exactly the trouble I'm facing. SQBinding solves this simply.
 
 ```cpp
 int test(int i) { return i; }
@@ -225,7 +225,7 @@ std::string str = func("Ligverd").ret<std::string>();
 
 ## Working with variables
 
-There are three main mechanisms: binding, taking, and obtaining meaning.
+There are three main mechanisms: binding, set, and get values.
 
 ```cpp
 std::string name;
@@ -314,7 +314,7 @@ In order for a method or function that accepts the type of the base class to wor
 
 Squirrel has no concept of structures, hashes, or namespaces, everything is replaced by tables.
 
-all global functions, variables and types are stored in the root table, in fact, when we declare **sqb::SQBinding sqb;** we create an SQBTable object.
+all global functions, variables and types are stored in the root table, in fact, when we declare **sqb::SQBinding sqb** we create an SQBTable object.
 
 ```cpp
 sqb::SQBinding sqb; // <- this is the SQBTable on the Squirrel root_table
