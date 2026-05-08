@@ -183,6 +183,7 @@ template <typename T>
 static SQInteger release_hook_destruct(SQUserPointer p, SQInteger size)
 {
   if (p) static_cast<T*>(p)->~T();
+  return 0;
 }
 
 template <typename T>

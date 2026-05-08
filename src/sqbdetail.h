@@ -318,6 +318,22 @@ struct ArgExtractor {
   }
 };
 
+// remove T& -> T
+template<typename T>
+struct ArgExtractor<T&> {
+  //static T& extract(HSQUIRRELVM vm, int idx, ExtractFunc ext) {
+  static T extract(HSQUIRRELVM vm, int idx, ExtractFunc ext) {
+    return *ArgExtractor<T*>::extract(vm, idx, ext);
+  }
+};
+
+template<typename T>
+struct ArgExtractor<const T&> {
+  static T extract(HSQUIRRELVM vm, int idx, ExtractFunc ext) {
+    return *ArgExtractor<const T*>::extract(vm, idx, ext);
+  }
+};
+
 template<typename T>
 struct ArgExtractor<T*> {
   static T* extract(HSQUIRRELVM vm, int idx, ExtractFunc ext) {
@@ -329,7 +345,6 @@ struct ArgExtractor<T*> {
     return types::pop<T*>(vm, idx);
   }
 };
-
 
 ///////////////////////////////////////////////
 
@@ -344,7 +359,8 @@ struct ArgumentUnpacker<>
 {
   template <typename Func>
   static typename std::result_of<Func()>::type
-  call(HSQUIRRELVM, Func&& func, const int argsCount, ExtractFunc ext = nullptr) {
+  call(HSQUIRRELVM, Func&& func, const int argsCount, ExtractFunc ext = nullptr)
+  {
     return func();
   }
 };
@@ -354,15 +370,20 @@ template <typename T, typename... Rest>
 struct ArgumentUnpacker<T, Rest...>
 {
   template <typename Func>
-  static typename std::result_of<Func(T, Rest...)>::type call(HSQUIRRELVM vm, Func&& func, const int argsCount, ExtractFunc ext = nullptr) {
+  static typename std::result_of<Func(T, Rest...)>::type
+  call(HSQUIRRELVM vm, Func&& func, const int argsCount, ExtractFunc ext = nullptr)
+  {
     SQInteger argIndex = argsCount - sizeof...(Rest);
     int argShift = ext ? 0 : 1;
 
-    T arg = detail::ArgExtractor<T>::extract(vm, argIndex + argShift, ext);
+    typedef typename std::remove_reference<T>::type BaseType;
+    BaseType arg = detail::ArgExtractor<T>::extract(vm, argIndex + argShift, ext);
 
-    return ArgumentUnpacker<Rest...>::call(vm, [&](Rest... rest) {
-      return func(arg, rest...);
-    }, argsCount, ext);
+    return ArgumentUnpacker<Rest...>::call(vm, 
+      [&func, &arg](Rest... rest) -> decltype(func(arg, rest...)) {
+        return func(arg, rest...);
+      }, 
+      argsCount, ext);
   }
 };
 
@@ -377,6 +398,9 @@ callFunction(HSQUIRRELVM vm, const std::function<Ret(Args...)>& func, ExtractFun
   Ret result = ArgumentUnpacker<Args...>::call(vm, [&func](Args... args) -> Ret {
         return func(args...);
       }, argsCount, ext);
+
+  // hm... convert Type& -> Type otherwise, use a pointer or stared_ptr
+  typedef typename std::remove_reference<Ret>::type ValueType;
 
   types::pushValue(vm, result);
   return 1;
