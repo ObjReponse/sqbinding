@@ -1,6 +1,6 @@
 # SQBinding
 
-C++11 binding to the scripting language [Squirrel](http://www.squirrel-lang.org /). Without any external dependencies except Squirrel itself.
+C++11 binding to the scripting language [Squirrel](http://www.squirrel-lang.org/). Without any external dependencies except Squirrel itself.
 
 This code was written as part of another major project. I thought some parts might be useful to other people.
 I wanted to unify the C++ API and the API for writing scripts as much as possible. To make the same code in C++ and Squirrel look almost the same.
@@ -338,7 +338,8 @@ sqb.newTable("my")
 
 ```
 
-В Squirrel это выглядит так
+In Squirrel it looks like this
+
 
 ```lua
 print(my.name)
@@ -604,7 +605,7 @@ SQBInding will create std::shared_ptr<Base> and give it to Squirrel.
 
 In fact, the smartSharedPtr() method is a wrapper as the most requested case.
 
-What does it look like in the general case?
+What does it look like in the general case:
 
 
 ```cpp
