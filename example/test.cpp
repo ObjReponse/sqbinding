@@ -152,17 +152,28 @@ void printfunc(HSQUIRRELVM v, const SQChar *s,...)
 }
 
 
+enum AAA {
+  A,
+  B,
+  C
+};
+
 int main(int argc, char **argv)
 {
   ut::Check check;
 
 
   {
-    sqb::SQBinding sqb(1024);
+    sqb::SQBinding sqb;
     sq_setprintfunc(sqb.vm, printfunc, printfunc);
 
     std::string my_name = "text";
     int my_i = 55;
+
+    sqb.setValue("A", AAA::A)
+       .setValue("B", AAA::B)
+       .setValue("C", AAA::C)
+       ;
 
     sqb.newTable("my")
         .bindValue("name", &my_name)
@@ -171,20 +182,26 @@ int main(int argc, char **argv)
         //.newTable("sub")
         ;
 
+
+    sqb.bindFunction("test", static_cast<int(*)(int)>(test));
+    sqb.bindFunction("test", static_cast<std::string(*)(std::string)>(test));
+    //sqb.bindFunction("test", static_cast<float(*)(float)>(test));
+
     sqb.bindFunction("f_str_int", f_str_int);
 
     sqb.bindClass<Test>("Test")
         .bindConstructor()
         .bindConstructor<int>()
         .bindConstructor<std::string, int>()
-        .bindConstructor([](std::string s) { return new Test(s, 55); }) // не существующая сигнатура конструктора, делаем сами что хотим
+        .bindConstructor([](std::string s) { return new Test(s, 55); })
         .bindMethod("single", &Test::single)
         .bindMethod("lambda", [](Test *self, int i, std::string s) { return self->multi(i,s); } )
         .bindMethod("multi", static_cast<std::string(Test::*)(int)>(&Test::multi))
         .bindMethod("multi", static_cast<std::string(Test::*)(int,std::string)>(&Test::multi))
         .bindProp("name", &Test::name)
         .bindProp("idx", &Test::idx, true)
-        .bindMethod("_shiftl", [](Test *self, int i) { *self << i; return self; })
+        //.bindMethod("_shiftl", [](Test *self, int i) { *self << i; return self; })
+        .bindMethod("_shiftl", &Test::operator<<)
         .bindMethod("_or", [](Test *self, std::string s) { *self | s; return self; })
         .bindStaticMethod("staticMethod", &Test::staicMethod)
         /////.bindStaticProp("static_prop", &Test::static_prop)
@@ -200,7 +217,7 @@ int main(int argc, char **argv)
         .bindConstructor()
         .bindConstructor<int>()
         .bindConstructor<std::string, int>()
-        .bindConstructor([](std::string s) { return new Test(s, 55); }) // не существующая сигнатура конструктора, делаем сами что хотим
+        .bindConstructor([](std::string s) { return new Test(s, 55); })
         .bindMethod("single", &Test::single)
         .bindMethod("lambda", [](Test *self, int i, std::string s) { return self->multi(i,s); } )
         .bindMethod("multi", static_cast<std::string(Test::*)(int)>(&Test::multi))
