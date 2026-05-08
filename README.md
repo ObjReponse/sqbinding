@@ -77,13 +77,13 @@ int main(int argc, char **argv)
   sqb::SQBinding sqb;
 
   sqb.bindFunction("hellocpp", hellocpp);
-  sqb.executeString("
+  sqb.executeString(R"(
     hellocpp()
 
     function hellosquirrel() {
       print("hello Squirrel\n")
     }
-  ");
+  )");
 
   auto hellosquirrel = sqb.getFunction("hellosquirrel");
 
@@ -296,7 +296,7 @@ inline void pushValue<CustomType>(HSQUIRRELVM vm, const CustomType& val) {
 }}
 ```
 
-I'll run a little ahead, if you have made a binding of the class, then you do not need to make such converters!_
+I'll run a little ahead, if you have made a binding of the class, then you do not need to make such converters!
 
 
 SQBinding can automatically do a cast type, provided that you guarantee correctness. To do this, you need to explicitly specify which types can be explicitly or not explicitly converted to.
@@ -397,7 +397,7 @@ ar[1] = "hello";
 std::string s = ar[1];
 
 // explicit type conversion
-std::string s = ar[a].as<std::string>;
+std::string s = ar[1].as<std::string>;
 
 // number of elements
 ar.size();
@@ -508,7 +508,7 @@ public:
   std::string method(int i) { return std::to_string(i); }
   std::string method(std::string n) { return n; }
 
-  Base operator+(int i) { ... }
+  Base& operator+(int i) { id+=i; return *this; }
 
   static void resetAll() {}
   static int version;
