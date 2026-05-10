@@ -7,7 +7,7 @@ I wanted to unify the C++ API and the API for writing scripts as much as possibl
 
 ## Why Squirrel
 
-At first, I used Lua. Objectively speaking, it's a great thing. But the syntax was completely unsuitable for my task. The existing bindings also did not solve all my needs.  Squirrel, with its classes, tables, and syntax, is much similar to C++.
+At first, I used Lua. Objectively speaking, it's a great thing. But the syntax was completely unsuitable for my task. The existing bindings also did not solve all my needs. Squirrel, with its classes, tables, and syntax, is much more similar to C++.
 
 The problem was that, once again, ready-made bindings did not provide what was needed.
 
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 }
 ```
 
-Console output is disabled by default, you should have your own output function.
+Console output is disabled by default; you should have your own output function.
 
 
 ```cpp
@@ -111,8 +111,8 @@ sqb::SQBinding sqb;
 sq_setprintfunc(sqb.vm, printfunc, printfunc); // print func, error func
 ```
 
-It is almost always better to run the code inside the try catch block, since SQBinding throws exceptions in case of errors.
-In general, I recommend closing the entire code in a separate `{...}` block
+It is almost always better to run the code inside a try-catch block, since SQBinding throws exceptions in case of errors.
+In general, I recommend wrapping the entire code in a separate `{...}` block.
 
 
 ```cpp
@@ -129,7 +129,7 @@ int main() {
     try {
       result = sqb.executeFile("script.nut");
     }catch(const std::exception& e){
-      fprintf(stderr, "Error %s : %s", e.what(), sqb::detail::getCurrentPosition(sq.sqb.vm).c_str());
+      fprintf(stderr, "Error %s : %s", e.what(), sqb::detail::getCurrentPosition(sqb.vm).c_str());
       std::exit(EXIT_FAILURE);
     }
 
@@ -145,14 +145,14 @@ int main() {
 
 Important!
 
-All variables, declared types, classes will exist until destroy `sqb`
+All variables, declared types, and classes will exist until `sqb` is destroyed.
 
 This is convenient because you can call basic functions and classes from a file, then call another file that will use the already loaded data, or call small routines from a string.
 
 
 ## Binding of functions
 
-There are two ways, through a pointer and through a lambda/functor.
+There are two ways: through a pointer and through a lambda/functor.
 
 ```cpp
 
@@ -181,7 +181,7 @@ sqb.bindFunction("func", [](std::string name){
 
 Now you can call **func() from Squirrel.**
 
-Often, when binding, the C++ API comes across, which contains many overloaded functions. This is exactly the trouble I'm facing. SQBinding solves this simply.
+Often, when binding, you come across a C++ API that contains many overloaded functions. This is exactly the trouble I faced. SQBinding solves this simply.
 
 ```cpp
 int test(int i) { return i; }
@@ -201,13 +201,13 @@ function func(name) {
 }
 ```
 
-First you need to execute the Squirrel code, then try to call the Squirrel function.
+First, you need to execute the Squirrel code, then try to call the Squirrel function.
 
 ```cpp
 
 sqb.executeFile("script.nut");
 // or
-sqb.executeString(scrip);
+sqb.executeString(script);
 
 // Creating the SQBFunction object
 auto func = sqb.getFunction("func");
@@ -225,7 +225,7 @@ std::string str = func("Ligverd").ret<std::string>();
 
 ## Working with variables
 
-There are three main mechanisms: binding, set, and get values.
+There are three main mechanisms: binding, setting, and getting values.
 
 ```cpp
 std::string name;
@@ -233,7 +233,7 @@ std::string name;
 sqb.bindValue("name", &name);
 sqb.bindValue("name", &name, true); // read only
 
-// get the value of a variable from Squirrel, if there is no variable, there will be an exception
+// get the value of a variable from Squirrel; if there is no variable, an exception will be thrown
 auto value = sqb.getValue<std::string>("value");
 
 // get if available
@@ -296,10 +296,10 @@ inline void pushValue<CustomType>(HSQUIRRELVM vm, const CustomType& val) {
 }}
 ```
 
-I'll run a little ahead, if you have made a binding of the class, then you do not need to make such converters!
+Getting ahead of myself: if you have made a binding of the class, then you do not need to make such converters!
 
 
-SQBinding can automatically do a cast type, provided that you guarantee correctness. To do this, you need to explicitly specify which types can be explicitly or not explicitly converted to.
+SQBinding can automatically do a type cast, provided that you guarantee correctness. To do this, you need to explicitly specify which types can be explicitly or implicitly converted to.
 
 ```cpp
 types::Type::create<ClassType,  ClassType*, BaseClassType, BaseClassType*>(OT_INSTANCE);
@@ -308,21 +308,21 @@ types::Type::create<ClassType,  ClassType*, BaseClassType, BaseClassType*>(OT_IN
 In 99% of cases, this is not required. SQBinding itself manages type compatibility.
 
 This may be necessary in some cases, for example, you have a base class, but you did not bind it, but only a child class was bound.
-In order for a method or function that accepts the type of the base class to work correctly, you can create a manual compatibility table (as shown above)
+In order for a method or function that accepts the type of the base class to work correctly, you can create a manual compatibility table (as shown above).
 
 ## Working with tables as a separate type and as a namespace
 
-Squirrel has no concept of structures, hashes, or namespaces, everything is replaced by tables.
+Squirrel has no concept of structures, hashes, or namespaces; everything is replaced by tables.
 
-all global functions, variables and types are stored in the root table, in fact, when we declare **sqb::SQBinding sqb** we create an SQBTable object.
+All global functions, variables, and types are stored in the root table. In fact, when we declare **sqb::SQBinding sqb** we create an SQBTable object.
 
 ```cpp
 sqb::SQBinding sqb; // <- this is the SQBTable on the Squirrel root_table
 
-// create your own table in the roottable
+// create your own table in the root table
 auto my = sqb.newTable("my");
 
-// create a free table in the roottable to which to bind and/or set variables and functions
+// create a free table in the root table to which to bind and/or set variables and functions
 std::string name;
 int index;
 int func(int i) {...}
@@ -338,7 +338,7 @@ sqb.newTable("my")
 
 ```
 
-In Squirrel it looks like this
+In Squirrel it looks like this:
 
 
 ```lua
@@ -351,20 +351,20 @@ my.lambda(9)
 my.subtable.name = "hello"
 ```
 
-To get a table from Squirrel in C++, on the contrary
+To get a table from Squirrel in C++, do the reverse:
 
 ```cpp
 sqb::SQBTable t(sqb.vm, sqb.find("my"));
 ```
 
-In fact, **find** can be called for any `SQBinding` object, it returns `HSQOBJECT`, i.e. the native Squirrel type.
+In fact, **find** can be called for any `SQBinding` object. It returns `HSQOBJECT`, i.e. the native Squirrel type.
 
 
 ## Arrays
 
-Array is the basic Squirrel type and is served by the SQBArray class
+Array is the basic Squirrel type and is represented by the SQBArray class.
 
-In most cases, it is not necessary to work with SQBArray specifically, it must be used either in pushValue/popValue converters or in rare cases of manual disassembly.
+In most cases, it is not necessary to work with SQBArray specifically; it is used either in pushValue/popValue converters or in rare cases of manual disassembly.
 
 
 ```cpp
@@ -398,7 +398,7 @@ ar[1] = "hello";
 std::string s = ar[1];
 
 // explicit type conversion
-std::string s = ar[1].as<std::string>;
+std::string s = ar[1].as<std::string>();
 
 // number of elements
 ar.size();
@@ -408,7 +408,7 @@ ar.clear();
 
 ```
 
-In Squirrel, elements of the same array can have a mixed type. But the mono type is more often used. To do this, you can use the conversion.
+In Squirrel, elements of the same array can have mixed types. But a single type is more often used. To do this, you can use the conversion.
 
 ```cpp
 sqb::SQBArray ar(sqb.vm);
@@ -417,9 +417,9 @@ ar.append(std::vector<int>({1,73,3,4,5}));
 auto v = ar.to_vector<int>();
 ```
 
-As I did in C++11, there is no `std::variant` in it, but you can use C++17 and higher or write your own type analog `variant`
+Since this is C++11, there is no `std::variant` in it, but you can use C++17 and higher or write your own `variant`-like type.
 
-in this case, you will get more convenience.
+In this case, you will get more convenience.
 
 ```cpp
 sqb::SQBArray ar(sqb.vm);
@@ -434,7 +434,7 @@ auto v2 = ar.to_vector<Type>();
 
 ```
 
-But as I said, you need to convert there more often./here is a structure that is more convenient to do via popValue/pushValue
+But as I said, you will need conversion more often. For a struct, it is more convenient to do this via popValue/pushValue.
 
 
 ## Classes
@@ -460,7 +460,7 @@ local obj = Object()
 obj.setStaticName(name)
 name = obj.getStaticName()
 ```
-Yeah, I don't like it either. If I get my hands on it, maybe I'll make a patch for Squirrel, but I don't even know how much work is being done for this yet.
+Yeah, I don't like it either. If I get my hands on it, maybe I'll make a patch for Squirrel, but I don't yet know how much work this would take.
 
 I have not allocated anything separate for the `enum`, and I usually do this
 
@@ -475,14 +475,14 @@ enum Type {
 // define in the roottable
 sqb.setValue("UNKNOWN",  Type::UNKNOWN);
 sqb.setValue("MOUSE",    Type::MOUSE);
-sqb.setValue("KEYBOADR", Type::KEYBOARD);
+sqb.setValue("KEYBOARD", Type::KEYBOARD);
 sqb.setValue("PRINTER",  Type::PRINTER);
 
 // or wrap it in a table
 sqb.newTable("Type")
    .setValue("UNKNOWN",  Type::UNKNOWN)
    .setValue("MOUSE",    Type::MOUSE)
-   .setValue("KEYBOADR", Type::KEYBOARD)
+   .setValue("KEYBOARD", Type::KEYBOARD)
    .setValue("PRINTER",  Type::PRINTER)
    ;
 
@@ -520,29 +520,29 @@ sqb.bindClass<Base>("Base")
    .bindConstructor()
    .bindConstructor<Type>()
    .bindConstructor<int>()
-   .bindConstructor<int, Type>(),
+   .bindConstructor<int, Type>()
    .bindConstructor([](std::string x){ return new Base( std::stoi(x) ); }) // <-- non-existent custom constructor
    .bindMethod("getID", &Base::getID)
-   .bindMethod("method", static_cast<std::string(Base::*)()>(&Test::method))
-   .bindMethod("method", static_cast<std::string(Base::*)(int)>(&Test::method))
-   .bindMethod("method", static_cast<std::string(Base::*)(std::string)>(&Test::method))
+   .bindMethod("method", static_cast<std::string(Base::*)()>(&Base::method))
+   .bindMethod("method", static_cast<std::string(Base::*)(int)>(&Base::method))
+   .bindMethod("method", static_cast<std::string(Base::*)(std::string)>(&Base::method))
    .bindMethod("incID", [](Base *self){ self->id++; }) // <-- a custom method that does not exist
    .bindStaticMethod("resetAll", &Base::resetAll)
    .bindProp("id", &Base::id)
    .bindProp("type", &Base::type, true) // <-- true - readonly
    .bindProp("next", [](Base *self){ return self->id+1; }) // <-- getter only
    .bindProp("name", [](Base *self){ return self->name; }, [](Base *self, std::string n){ self->name = n; })
-   .bindStaticMethod("getStaticVersion", [](){ return Base::version })
+   .bindStaticMethod("getStaticVersion", [](){ return Base::version; })
    .bindStaticMethod("setStaticVersion", [](int v){ Base::version = v; })
-   .bindMethod("_add", &Base::operator+)
+   .bindMethod("_add", &Base::operator+);
 
 ```
 
-As I wrote above with the static ambush property, but they are rare.
+As I wrote above about the static property limitation, but such cases are rare.
 
-'_add` is the metomethodes of Squirrel itself
+`_add` is one of the metamethods of Squirrel itself.
 
-**Basic metomethodes**
+**Basic metamethods**
 
 ```
 _add
@@ -588,22 +588,22 @@ sqb.bindClass<Device, Base>("Device", "Base")
 
 ```
 
-Squirrel stores a pointer to a class, like a regular raw pointer, which is not always convenient. For example, we create a class in Squirrel that takes over C++ and vice versa.
+Squirrel stores a pointer to a class as a regular raw pointer, which is not always convenient. For example, we create a class in Squirrel that is passed to C++ and vice versa.
 
 In these cases, it is convenient to use std::shared_ptr / std::unique_ptr / or even some kind of custom ptr.
 
-I hasten to reassure you that you will not have to do anything, do the binding **in the same way** you just need to call the smart method
+Don't worry — you don't have to do anything special. Just do the binding **in the same way**, you only need to call the smart method.
 
 ```cpp
 sqb.bindClass<Base>("Base")
    .smartSharedPtr()
-   ... then its the same as in the example above
+   ... then it's the same as in the example above
 
 ```
 
-SQBInding will create std::shared_ptr<Base> and give it to Squirrel.
+SQBinding will create std::shared_ptr<Base> and give it to Squirrel.
 
-In fact, the smartSharedPtr() method is a wrapper as the most requested case.
+In fact, the smartSharedPtr() method is a wrapper for the most requested case.
 
 What does it look like in the general case:
 
@@ -619,7 +619,7 @@ sqb.bindClass<Base>("Base")
 
 The first argument is the container creation and object placement functor, the second argument is the object extraction functor from the container.
 
-I specifically made it possible to use any container, not just the std::stared compatible ones.
+I specifically made it possible to use any container, not just std::shared compatible ones.
 
 ### Important: pointers in methods are bound via lambdas and external functions
 
@@ -634,7 +634,7 @@ through "smartSharedPtr()" or through a custom "smart()".
 })
 ```
 
-But when passing an object to an external function, the type of pointer being passed depends on how the class is registered.:
+But when passing an object to an external function, the type of pointer being passed depends on how the class is registered:
 
 
 ```lua
@@ -648,7 +648,7 @@ local pcc <- BaseCustomContainer("test")
 externalFunction(pcc) -- passes the custom container specified in smart() MyPtr<Base> etc
 ```
 
-Accordingly, the C++ function must be declared for the desired type.:
+Accordingly, the C++ function must be declared for the desired type:
 
 ```cpp
 // For a regular instance
